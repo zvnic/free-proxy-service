@@ -2,6 +2,5 @@ version: '3'
 services:
   microservice:
     build: .
-    user: myuser
     ports:
       - "8066:8080"
