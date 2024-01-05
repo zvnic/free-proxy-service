@@ -15,6 +15,8 @@ COPY requirements.txt .
 
 # Устанавливаем зависимости
 RUN pip install --no-cache-dir -r requirements.txt
+RUN chown myuser:myuser http_proxy.txt
+RUN chown myuser:myuser proxy_check.txt
 
 # Копируем остальные файлы проекта
 COPY . .
