@@ -1,6 +1,12 @@
 # Используем базовый образ с поддержкой Python
 FROM python:3.9-slim
 
+# Создаем не-root пользователя
+RUN useradd -ms /bin/bash myuser
+
+# Переключаемся на не-root пользователя
+USER myuser
+
 # Устанавливаем рабочую директорию внутри контейнера
 WORKDIR /app
 
