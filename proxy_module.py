@@ -2,10 +2,17 @@ import asyncio
 import os
 import time
 import aiohttp
+import logging
 from configparser import ConfigParser
 
 config = ConfigParser()
 config.read('config.ini')
+
+# Настроим систему логирования
+logging.basicConfig(
+    level=logging.DEBUG,  # Уровень логирования (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
 
 async def get_free_proxies():
     url = config.get('proxy', 'url')
@@ -15,7 +22,7 @@ async def get_free_proxies():
 
     # Проверяем, был ли файл proxy_check.txt обновлен в последние N секунд
     if os.path.exists(checked_proxy_file) and (time.time() - os.path.getmtime(checked_proxy_file)) < check_interval:
-        print(f"Прошло менее {check_interval} с последнего обновления. Используем существующие проверенные прокси.")
+        logging.info(f"Прошло менее {check_interval} с последнего обновления. Используем существующие проверенные прокси.")
         return get_proxies_from_file(checked_proxy_file)
 
     async with aiohttp.ClientSession() as session:
@@ -24,13 +31,13 @@ async def get_free_proxies():
                 content = await response.text()
                 with open(proxy_file, "w") as file:
                     file.write(content)
-                print(f"Прокси успешно получены и сохранены в файл: {proxy_file}")
+                logging.info(f"Прокси успешно получены и сохранены в файл: {proxy_file}")
 
                 proxy_list = get_proxies_from_file(proxy_file)
                 working_proxies = await check_proxies_async(session, proxy_list)
 
                 if working_proxies:
-                    print(f"Всего рабочих прокси: {len(working_proxies)}")
+                    logging.info(f"Всего рабочих прокси: {len(working_proxies)}")
 
                     # Сохраняем проверенные и доступные прокси в файл
                     with open(checked_proxy_file, "w") as checked_file:
@@ -38,10 +45,10 @@ async def get_free_proxies():
 
                     return working_proxies
                 else:
-                    print("Нет рабочих прокси.")
+                    logging.error("Нет рабочих прокси.")
                     return []
             else:
-                print(f"Не удалось получить содержимое файла. Код состояния: {response.status}")
+                logging.error(f"Не удалось получить содержимое файла. Код состояния: {response.status}")
                 return []
 
 
