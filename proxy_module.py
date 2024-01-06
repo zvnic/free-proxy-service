@@ -13,7 +13,7 @@ async def get_free_proxies():
     checked_proxy_file = config.get('proxy', 'checked_proxy_file')
     check_interval = config.getint('proxy', 'check_interval')
 
-    # Проверяем, был ли файл proxy_check.txt обновлен в последние 5 минут
+    # Проверяем, был ли файл proxy_check.txt обновлен в последние N секунд
     if os.path.exists(checked_proxy_file) and (time.time() - os.path.getmtime(checked_proxy_file)) < check_interval:
         print(f"Прошло менее {check_interval} с последнего обновления. Используем существующие проверенные прокси.")
         return get_proxies_from_file(checked_proxy_file)
@@ -27,7 +27,7 @@ async def get_free_proxies():
                 print(f"Прокси успешно получены и сохранены в файл: {proxy_file}")
 
                 proxy_list = get_proxies_from_file(proxy_file)
-                working_proxies = await check_proxies(session, proxy_list)
+                working_proxies = await check_proxies_async(session, proxy_list)
 
                 if working_proxies:
                     print(f"Всего рабочих прокси: {len(working_proxies)}")
@@ -45,24 +45,24 @@ async def get_free_proxies():
                 return []
 
 
-async def check_proxy(session, proxy):
+async def check_proxy_async(session, proxy):
     try:
+        start_time = time.time()
         async with session.get("http://www.example.com", proxy=f"http://{proxy}", timeout=5) as response:
+            end_time = time.time()
             if response.status == 200:
-                return True
+                return proxy, end_time - start_time
             else:
-                return False
+                return proxy, float('inf')  # Возвращаем бесконечность для неуспешных запросов
     except Exception as e:
-        return False
+        return proxy, float('inf')  # Возвращаем бесконечность при возникновении исключения
 
-
-async def check_proxies(session, proxy_list):
-    tasks = [check_proxy(session, proxy) for proxy in proxy_list]
+async def check_proxies_async(session, proxy_list):
+    tasks = [check_proxy_async(session, proxy) for proxy in proxy_list]
     results = await asyncio.gather(*tasks)
-    working_proxies = [proxy for proxy, result in zip(proxy_list, results) if result]
+    working_proxies = [proxy[0] for proxy in sorted(results, key=lambda x: x[1]) if proxy[1] != float('inf')]
 
     return working_proxies
-
 
 def get_proxies_from_file(file_path):
     with open(file_path, 'r') as file:

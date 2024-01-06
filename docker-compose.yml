@@ -4,3 +4,5 @@ services:
     build: .
     ports:
       - "8066:8080"
+    volumes:
+      - ./config.ini:/app/config.ini

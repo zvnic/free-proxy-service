@@ -8,7 +8,7 @@ async def handler(request):
 
 async def periodic_check():
     while True:
-        await asyncio.sleep(3)  # Периодичность проверки каждые 5 минут
+        await asyncio.sleep(3)  # Периодичность проверки
         await proxy_module.get_free_proxies()  # Мы можем проигнорировать результат, так как он сохраняется внутри модуля
 
 if __name__ == '__main__':

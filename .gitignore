@@ -201,3 +201,4 @@ cython_debug/
 # .idea/modules
 # *.iml
 # *.ipr
+/proxy_check.txt
